@@ -60,13 +60,10 @@ trait CombinatorParser extends RegexParsers with Parsers with Parser with Syntax
     */
   def parseAst(in: String): Either[Error, AST] = {
     lines = buildLineIndex(in)
-    try {
-      parseAll(parseTopLevel, new ParserString(in)) match {
-        case Success(result, _) => Right(result)
-        case failure: NoSuccess => Left(scala.sys.error(failure.msg))
-      }
-    } catch {
-      case e: Throwable => Left(ParseError(e.getMessage(), -1, -1))
+
+    parseAll(parseTopLevel, new ParserString(in)) match {
+      case Success(result, _) => Right(result)
+      case failure: NoSuccess => Left(ParseError(failure.msg, -1, -1))
     }
   }
 
@@ -75,13 +72,10 @@ trait CombinatorParser extends RegexParsers with Parsers with Parser with Syntax
     */
   def parseExpr(in: String): Either[Error, Expr] = {
     lines = buildLineIndex(in)
-    try {
-      parseAll(expr, new ParserString(in)) match {
-        case Success(result, _) => Right(result)
-        case failure: NoSuccess => Left(scala.sys.error(failure.msg))
-      }
-    } catch {
-      case e: Throwable => Left(ParseError(e.getMessage(), -1, -1))
+
+    parseAll(expr, new ParserString(in)) match {
+      case Success(result, _) => Right(result)
+      case failure: NoSuccess => Left(ParseError(failure.msg, -1, -1))
     }
   }
 
