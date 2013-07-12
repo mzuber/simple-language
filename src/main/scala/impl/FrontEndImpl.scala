@@ -58,9 +58,9 @@ object FrontEndImpl extends FrontEnd with Lexic with Syntax with CombinatorParse
         source.close()
         code
       }
-      val prelude = Source.fromURL(getClass.getResource("/prelude.sl")).getLines.mkString("\n")
+      val prelude = Source.fromURL(getClass.getResource("/Prelude.sl")).getLines.mkString("\n")
 
-      run(prelude +: input.toList).fold(println(_), println(_))
+      run(prelude +: input.toList).fold((err: Error) => println(err.message), println(_))
     }
   }
   

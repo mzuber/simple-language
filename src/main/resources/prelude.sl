@@ -1,4 +1,4 @@
--- Copyright (c) 2010, Andreas Buechele, Florian Lorenzen, Judith Rohloff
+-- Copyright (c) 2012, Technische Universität Berlin
 -- All rights reserved.
 
 -- Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,10 @@
 -- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 -- OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+
+------------------------------------------------------------------------
 -- Standard prelude of SL
+------------------------------------------------------------------------
 
 DATA Bool = True | False
 
