@@ -48,24 +48,22 @@ trait Lexic {
   val neLex = "/="
   val geLex = ">="
   val gtLex = ">"
-  val stolLex = "stol"
-  val ltosLex = "ltos"
 
   val strAdd = "+s"
 
   val intStrLex = "int2Str"
   val charStrLex = "char2Str"
-  val realStrLex = "real2Str"
-
-  val arithOps = List(addLex, subLex, mulLex, divLex)
-  val cmpOps = List(ltLex, leLex, eqLex, neLex, geLex, gtLex)
-  val stringOps = List(stolLex, ltosLex)
-  val predefinedOps = arithOps ++ cmpOps ++ stringOps
-
   val ordLex = "ord"
   val chrLex = "chr"
 
-  val predefinedFuns = predefinedOps ++ List(ordLex, chrLex)
+  val arithOps = List(addLex, subLex, mulLex, divLex)
+  val cmpOps = List(ltLex, leLex, eqLex, neLex, geLex, gtLex)
+  val stringOps = List(strAdd)
+  val predefinedOps = arithOps ++ cmpOps ++ stringOps
+
+  val conversionFuns = List(ordLex, chrLex, intStrLex, charStrLex)
+
+  val predefinedFuns = predefinedOps ++ conversionFuns
 
   /* Keywords and symbols */
   val defLex = "DEF"
@@ -79,8 +77,7 @@ trait Lexic {
   val letLex = "LET"
   val inLex = "IN"
 
-  val keywords = List(defLex, dataLex, ifLex, thenLex, elseLex,
-    caseLex, ofLex, letLex, inLex, funLex)
+  val keywords = List(defLex, dataLex, ifLex, thenLex, elseLex, caseLex, ofLex, letLex, inLex, funLex)
 
   val dotLex = "."
   val funEqLex = "="
