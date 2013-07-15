@@ -53,8 +53,6 @@ import de.tuberlin.uebb.sl2.modules._
   */
 trait CombinatorParser extends RegexParsers with Parsers with Parser with Syntax with Errors with Lexic {
 
-  // TODO: definition of operators
-
   /**
     * Parse an SL program.
     */
@@ -63,7 +61,7 @@ trait CombinatorParser extends RegexParsers with Parsers with Parser with Syntax
 
     parseAll(parseTopLevel, new ParserString(in)) match {
       case Success(result, _) => Right(result)
-      case failure: NoSuccess => Left(ParseError(failure.msg, -1, -1))
+      case NoSuccess(err, next) => Left(ParseError(err, next.pos.line, next.pos.column))
     }
   }
 
@@ -74,8 +72,8 @@ trait CombinatorParser extends RegexParsers with Parsers with Parser with Syntax
     lines = buildLineIndex(in)
 
     parseAll(expr, new ParserString(in)) match {
-      case Success(result, _) => Right(result)
-      case failure: NoSuccess => Left(ParseError(failure.msg, -1, -1))
+      case Success(result, _)   => Right(result)
+      case NoSuccess(err, next) => Left(ParseError(err, next.pos.line, next.pos.column))
     }
   }
 

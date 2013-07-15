@@ -72,8 +72,8 @@ trait Errors {
   }
 
   /* Parser: parse error */
-  case class ParseError(msg : String, startIndex : Int, endIndex : Int) extends Error {
-    override def message = "Parse error in [%d,%d]: %s".format(startIndex, endIndex, msg)
+  case class ParseError(msg : String, line : Int, column : Int) extends Error {
+    override def message = "Parse error in (%d,%d) %s".format(line, column, msg)
   }
 
   /* Type checker: undefined element error */
