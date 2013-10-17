@@ -26,33 +26,12 @@
  *
  */
 
-package de.tuberlin.uebb.sl2.tests.impl
+package de.tuberlin.uebb.sl2.modules
 
-import de.tuberlin.uebb.sl2.tests.specs._
-import de.tuberlin.uebb.sl2.impl._
-import de.tuberlin.uebb.sl2.modules._
-import de.tuberlin.uebb.sl2.modules.Syntax.{VarFirstClass}
-
-class ContextAnalysisTest
-  extends ContextAnalysisSpec
-  with Lexic
-  with Syntax
-  with SyntaxTraversal
-  with Context
-  with Type
-  with ProgramCheckerImpl
-  with EnrichedLambdaCalculus
-  with FDCheckerImpl
-  with DTCheckerImpl
-  with GraphImpl[VarFirstClass]
-  with LetRecSplitter
-  with TypeCheckerImpl
-  with NameSupply
-  with SLExpressions
-  with Errors
-  with Configs
-  with AbstractFile
-  with ModuleResolverImpl
-  with ModuleNormalizerImpl
-  with ModuleContextImpl
-  with SignatureJsonSerializer
+/**
+  * The compiler driver.
+  */
+trait Driver {
+  self: Parser with Syntax with ProgramChecker with Errors with Configs =>
+  def run(config: Config): Either[Error, String]
+}
