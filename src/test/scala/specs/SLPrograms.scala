@@ -1,32 +1,29 @@
 /*
- * Copyright (c) 2012, Technische Universität Berlin
+ * Copyright (c) 2012, TU Berlin
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
+ * modification, are permitted provided that the following conditions are met:
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above copyright
+ *     notice, this list of conditions and the following disclaimer in the
+ *     documentation and/or other materials provided with the distribution.
+ *   * Neither the name of the TU Berlin nor the
+ *     names of its contributors may be used to endorse or promote products
+ *     derived from this software without specific prior written permission.
+
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL TU Berlin BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * - Redistributions of source code must retain the above copyright
- *   notice, this list of conditions and the following disclaimer.
- * - Redistributions in binary form must reproduce the above
- *   copyright notice, this list of conditions and the following
- *   disclaimer in the documentation and/or other materials provided
- *   with the distribution.
- * - Neither the name of the TU Berlin nor the names of its
- *   contributors may be used to endorse or promote products derived
- *   from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
- * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 package de.tuberlin.uebb.sl2.tests.specs
@@ -46,42 +43,40 @@ trait SLPrograms {
   |DEF l4 = (LET c2 = 3 IN \y.c2+y)(LET c2 = 5 IN c2)
   """.stripMargin
 
-
-  val multipleParams = "DEF add x y z = x + y + z"
-
-
   val concat = """
-  |DEF xs        ++ Nil = xs
-  |DEF Nil       ++ xs  = xs
-  |DEF (Cons x xs) ++ ys  = Cons x (xs ++ ys)
+  |DEF xs            +++ L.Nil = xs
+  |DEF L.Nil         +++ xs  = xs
+  |DEF (L.Cons x xs) +++ ys  = L.Cons x (xs +++ ys)
     """.stripMargin
 
 
-  val range = "DEF range n = IF n <= 0 THEN Cons 0 Nil ELSE Cons n (range (n - 1))"
+  val range = """
+  |IMPORT "std/list" AS L
+  |DEF range n = IF n <= 0 THEN L.Cons 0 L.Nil ELSE L.Cons n (range (n - 1))"""
 
   
   val filter = """
-  |DEF filter (Nil)       p = Nil
-  |DEF filter (Cons x xs) p = IF p x THEN Cons x (filter xs p) ELSE filter xs p
+  |DEF filter (L.Nil)       p = L.Nil
+  |DEF filter (L.Cons x xs) p = IF p x THEN L.Cons x (filter xs p) ELSE filter xs p
   |
   |DEF filterNot xs p = filter xs (\ x . not (p x))
   """.stripMargin
 
 
   val reverse = """
-  |DEF reverse Nil = Nil
-  |DEF reverse xs  = reverseHelper Nil xs
+  |DEF reverse L.Nil = L.Nil
+  |DEF reverse xs  = reverseHelper L.Nil xs
   |
-  |DEF reverseHelper r Nil       = r
-  |DEF reverseHelper r (Cons x xs) = reverseHelper (Cons x r) xs
+  |DEF reverseHelper r L.Nil         = r
+  |DEF reverseHelper r (L.Cons x xs) = reverseHelper (L.Cons x r) xs
   """.stripMargin
 
 
   val sort = range + concat + filter + reverse + """
-  |DEF quicksort Nil        = Nil
-  |DEF quicksort (Cons x Nil) = Cons x Nil
-  |DEF quicksort (Cons x xs) = LET lessThanX = \ y . y < x
-  |                          IN (filter xs lessThanX) ++ (Cons x (filterNot xs lessThanX))
+  |DEF quicksort L.Nil            = L.Nil
+  |DEF quicksort (L.Cons x L.Nil) = L.Cons x L.Nil
+  |DEF quicksort (L.Cons x xs)    = LET lessThanX = \ y . y < x
+  |                                 IN (filter xs lessThanX) +++ (L.Cons x (filterNot xs lessThanX))
   """.stripMargin
 
 
@@ -111,11 +106,12 @@ trait SLPrograms {
 
 
   val lambdaPatterns = """
-  | DEF f = (\ (Cons a b) (Cons x (Cons Nil Nil)) y True . a / y)
+  | IMPORT "std/list" AS L
+  | DEF f = (\ (L.Cons a b) (L.Cons x (L.Cons L.Nil L.Nil)) y True . a / y)
   |         (LET first = 1593
-  |  	         rest  = Cons 1 Nil
-  |          IN Cons first rest)
-  |         (Cons Nil (Cons Nil Nil))
+  |  	         rest  = L.Cons 1 L.Nil
+  |          IN L.Cons first rest)
+  |         (L.Cons L.Nil (L.Cons L.Nil L.Nil))
   |         (LET a = -9 IN a / 3)
   |         True
   """.stripMargin
@@ -145,7 +141,8 @@ trait SLPrograms {
 
 
   val shadowedPatternVar = """
-  | DEF f (Cons b a) v = LET g = \ a . a + v
+  | IMPORT "std/list" AS L
+  | DEF f (L.Cons b a) v = LET g = \ a . a + v
   |                      IN g b
   """.stripMargin
 
@@ -167,21 +164,23 @@ trait SLPrograms {
 
 
   val partialApplication = """
+  | IMPORT "std/list" AS L
   | DEF f a b = a + b
   |
-  | DEF g a = Cons (\x . f x a) Nil
+  | DEF g a = L.Cons (\x . f x a) L.Nil
   |
-  | DEF first (Cons a b) = a
-  | DEF rest (Cons a b) = b
+  | DEF first (L.Cons a b) = a
+  | DEF rest (L.Cons a b) = b
   |
   | DEF call a c = (first c) a
   """.stripMargin
 
 
   val lateMatch = """
-  | DEF f (Cons a b) x (Cons c d) = 1
-  | DEF f z          x (Cons f g) = 2
-  | DEF f y          x Nil        = 3
+  | IMPORT "std/list" AS L
+  | DEF f (L.Cons a b) x (L.Cons c d) = 1
+  | DEF f z            x (L.Cons f g) = 2
+  | DEF f y            x L.Nil        = 3
   """.stripMargin
 
   val mixedPatterns = """
@@ -194,15 +193,15 @@ trait SLPrograms {
   """.stripMargin
 
 
-  var overlappingPatterns = """
+  val overlappingPatterns = """
   | DEF f a b c = 1 
   | DEF f a b c = 2
   """.stripMargin
 
 
-  var shadowedVars = """
+  val shadowedVars = """
   | DEF f = LET v = 10
-  |             x = (LET v = 20 IN \ x y . v * x) (LET v = -30 IN v) v
+  |             x = (LET v = 20 IN \ x y . v * x) (LET v = neg 30 IN v) v
   |         IN v + x
   """.stripMargin
 }

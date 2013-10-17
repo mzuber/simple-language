@@ -1,37 +1,33 @@
 /*
- * Copyright (c) 2012, Technische Universität Berlin
+ * Copyright (c) 2012, TU Berlin
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
+ * modification, are permitted provided that the following conditions are met:
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above copyright
+ *     notice, this list of conditions and the following disclaimer in the
+ *     documentation and/or other materials provided with the distribution.
+ *   * Neither the name of the TU Berlin nor the
+ *     names of its contributors may be used to endorse or promote products
+ *     derived from this software without specific prior written permission.
+
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL TU Berlin BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * - Redistributions of source code must retain the above copyright
- *   notice, this list of conditions and the following disclaimer.
- * - Redistributions in binary form must reproduce the above
- *   copyright notice, this list of conditions and the following
- *   disclaimer in the documentation and/or other materials provided
- *   with the distribution.
- * - Neither the name of the TU Berlin nor the names of its
- *   contributors may be used to endorse or promote products derived
- *   from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
- * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 package de.tuberlin.uebb.sl2.modules
 
-import scala.language.implicitConversions
 import scala.language.postfixOps
 
 /**
@@ -48,8 +44,9 @@ trait EnrichedLambdaCalculus {
     * representation for type checking and type inference.
     */
   sealed abstract class ELC {
-    override def toString : String = ELCPrettyPrinter.pretty(this)
+    override def toString() : String = ELCPrettyPrinter.pretty(this)
   }
+  case class EReal(value : Double, attribute: Attribute = EmptyAttribute) extends ELC
   case class EInt(value: Int, attribute: Attribute = EmptyAttribute) extends ELC
   case class EChar(value: Char, attribute: Attribute = EmptyAttribute) extends ELC
   case class EStr(value: String, attribute: Attribute = EmptyAttribute) extends ELC
@@ -61,31 +58,22 @@ trait EnrichedLambdaCalculus {
   case class ELetRec(definition: List[EDefinition], body: ELC, attribute: Attribute = EmptyAttribute) extends ELC
   case class EChoice(choices: List[ELC], attribute: Attribute = EmptyAttribute) extends ELC
   case class ECase(expr: ELC, alternatives: List[EAlternative], attribute: Attribute = EmptyAttribute) extends ELC
+  case class EJavaScript(jsCode: String, sig: Option[Type], attribute: Attribute = EmptyAttribute) extends ELC
 
-  /**
-    * Local definitions.
-    */
-  sealed case class EDefinition(lhs: Var, sig: Option[Type], rhs: ELC, attribute: Attribute = EmptyAttribute)
+  sealed case class EDefinition(lhs: VarFirstClass, sig: Option[Type], rhs: ELC, attribute: Attribute = EmptyAttribute)
 
-  /**
-    * Alternatives.
-    */
   sealed case class EAlternative(pattern: EPattern, expr: ELC, attribute: Attribute = EmptyAttribute)
 
-  /**
-    * Patterns. 
-    */
   sealed abstract class EPattern {
-
     /**
       * Extract all variables from pattern.
       */
-    def vars: List[Var] = this match {
+    def vars: List[VarName] = this match {
       case EPatternVar(v, _)       => List(v)
       case EPatternApp(_, pats, _) => pats.map(_.vars).flatten.distinct
     }
   }
-  case class EPatternVar(ide: Var, attribute: Attribute = EmptyAttribute) extends EPattern
+  case class EPatternVar(ide: VarName, attribute: Attribute = EmptyAttribute) extends EPattern
   case class EPatternApp(con: ConVar, conParams: List[EPattern], attribute: Attribute = EmptyAttribute) extends EPattern
 
 
@@ -93,17 +81,19 @@ trait EnrichedLambdaCalculus {
     * Select the attribute of an ELC expression.
     */
   def attribute(e: ELC): Attribute = e match {
-    case EInt(_, attr)       => attr
-    case EChar(_, attr)      => attr
-    case EStr(_, attr)       => attr
-    case ECon(_, attr)       => attr
-    case EVar(_, attr)       => attr
-    case EApp(_, _, attr)    => attr
-    case ELam(_, _, attr)    => attr
-    case ELet(_, _, attr)    => attr
+    case EInt(_, attr) => attr
+    case EReal(_, attr) => attr
+    case EChar(_, attr) => attr
+    case EStr(_, attr) => attr
+    case ECon(_, attr) => attr
+    case EVar(_, attr) => attr
+    case EApp(_, _, attr) => attr
+    case ELam(_, _, attr) => attr
+    case ELet(_, _, attr) => attr
     case ELetRec(_, _, attr) => attr
-    case EChoice(_, attr)    => attr
-    case ECase(_, _, attr)   => attr
+    case EChoice(_, attr) => attr
+    case ECase(_, _, attr) => attr
+    case EJavaScript(_, _, attr) => attr
   }
 
 
@@ -150,12 +140,12 @@ trait EnrichedLambdaCalculus {
     /*
      * Transform a top-level function into a local definition of a let-binding.
      */
-    def makeEDef(name: Var, funDefs: List[FunctionDef]) = funDefs match {
+    def makeEDef(v: Var, funDefs: List[FunctionDef]) = funDefs match {
       /* Function with a single definition */
       case List(funDef) => {
         val rhs = translateDef(funDef)
-        val ty = lookupSig(name)
-        EDefinition(name, ty, rhs, attribute(rhs))
+        val ty = lookupSig(v)
+        EDefinition(v, ty, rhs, attribute(rhs))
       }
 
       /*
@@ -171,9 +161,9 @@ trait EnrichedLambdaCalculus {
        */
       case _ => {
         val rhs = funDefs.map(translateDef)
-        val ty = lookupSig(name)
+        val ty = lookupSig(v)
         val attr = attribute(rhs.head) // TODO: combine the attributes of all defs
-        EDefinition(name, ty, EChoice(rhs, attr), attr)
+        EDefinition(v, ty, EChoice(rhs, attr), attr)
       }
     }
 
@@ -195,16 +185,16 @@ trait EnrichedLambdaCalculus {
     /*
      * Get the definition of the main function. If the program doesn't contain a
      * main function, i.e., the user is programming a library, we will use a dummy
-     * function consisting just of the constant 1. 
+     * function consisting just of an empty JavaScript quotation. 
      */
-    val main = funDefs.getOrElse("main", List(FunctionDef(Nil, ConstInt(1)))).head.expr
+    val main = funDefs.getOrElse(Syntax.Var("main"), List(FunctionDef(Nil, JavaScript("", None)))).head.expr
 
     /*
      * Translate all function definitions into local definitions for a
      * recursive let binding and annotate these definitions with the types
      * from the function's signature
      */
-    val localDefs = (funDefs - "main").toList map (makeEDef _ tupled)
+    val localDefs = (funDefs - Syntax.Var("main")).toList map (makeEDef _ tupled)
 
     ELetRec(localDefs, exprToELC(main), EmptyAttribute)
   }
@@ -214,13 +204,15 @@ trait EnrichedLambdaCalculus {
     * Translate an SL expression into the enriched lambda calculus.
     */
   def exprToELC(expr: Expr): ELC = expr match {
-    case ExVar(ide, attr)         => EVar(ide, attr)
-    case ExCon(con, attr)         => ECon(con, attr)
-    case ConstInt(value, attr)    => EInt(value, attr)
-    case ConstChar(value, attr)   => EChar(value, attr)
+    case ExVar(ide, attr) => EVar(ide, attr)
+    case ExCon(con, attr) => ECon(con, attr)
+    case ConstInt(value, attr) => EInt(value, attr)
+    case ConstReal(value, attr) => EReal(value, attr)
+    case ConstChar(value, attr) => EChar(value, attr)
     case ConstString(value, attr) => EStr(value, attr)
-    case Case(expr, alts, attr)   => ECase(exprToELC(expr), alts.map(altToEAlt), attr)
-    case App(fun, expr, attr)     => EApp(exprToELC(fun), exprToELC(expr), attr)
+    case JavaScript(jsCode, sig, attr) => EJavaScript(jsCode, sig.map(astToType), attr)
+    case Case(expr, alts, attr) => ECase(exprToELC(expr), alts.map(altToEAlt), attr)
+    case App(fun, expr, attr) => EApp(exprToELC(fun), exprToELC(expr), attr)
 
     /*
      * Conditionals are transformed into a case expression, i.e.,
@@ -236,8 +228,8 @@ trait EnrichedLambdaCalculus {
       val elseELC = exprToELC(elseE)
 
       ECase(condELC, List(
-        EAlternative(EPatternApp("True", Nil), thenELC, attribute(thenE)),
-        EAlternative(EPatternApp("False", Nil), elseELC, attribute(elseE))), attr)
+        EAlternative(EPatternApp(Syntax.ConVar("True"), Nil), thenELC, attribute(thenE)),
+        EAlternative(EPatternApp(Syntax.ConVar("False"), Nil), elseELC, attribute(elseE))), attr)
     }
 
     /*
@@ -264,8 +256,8 @@ trait EnrichedLambdaCalculus {
 
 
   /**
-    * Translate alternatives in CASE expressions to ELC alternatives.
-    */
+   * Translate alternatives in CASE expressions to ELC alternatives.
+   */
   def altToEAlt(alt: Alternative): EAlternative = {
     val elcPat = patToEPat(alt.pattern)
     val elc = exprToELC(alt.expr)
@@ -275,8 +267,8 @@ trait EnrichedLambdaCalculus {
 
 
   /**
-    * Translate patterns in definitions to ELC patterns.
-    */
+   * Translate patterns in definitions to ELC patterns.
+   */
   def patToEPat(pat: Pattern): EPattern = pat match {
     case PatternVar(ide, attr) => EPatternVar(ide, attr)
     case PatternExpr(con, patExprs, attr) => EPatternApp(con, patExprs.map(patToEPat), attr)
@@ -287,7 +279,7 @@ trait EnrichedLambdaCalculus {
     * Translate local definitions in a let-binding into ELC definitions.
     */
   def defToEDef(ldef: LetDef) = {
-    EDefinition(ldef.lhs, None, exprToELC(ldef.rhs), ldef.attribute)
+    EDefinition(Syntax.Var(ldef.lhs), None, exprToELC(ldef.rhs), ldef.attribute)
   }
 
 
@@ -307,32 +299,38 @@ trait EnrichedLambdaCalculus {
     */
   object ELCPrettyPrinter extends org.kiama.output.PrettyPrinter with Lexic {
 
-    def pretty(expr: ELC): String = super.pretty(elcDoc(expr))
+    def pretty(t: ELC): String = super.pretty(showELC(t))
 
-    implicit def elcDoc(expr: ELC): Doc = expr match {
-      case EVar(ide, _)         => ide
-      case ECon(con, _)         => con
-      case EInt(num, _)         => value(num)
-      case EChar(char, _)       => dquotes(value(char))
-      case EStr(str, _)         => dquotes(value(str))
-      case ELam(pat, e, _)      => parens(lambdaLex <+> pat <+> dotLex <> nest(line <> e))
-      case ECase(e, alts, _)    => caseLex <+> e <@> ssep(alts map alternativeDoc, linebreak)
-      case ELet(ldef, e, _)     => letLex <+> ldef <@> inLex <> nest(line <> e)
-      case ELetRec(ldefs, e, _) => "LETREC" <+> nest(line <> cat(ldefs map definitionDoc)) <@> inLex <> nest(line <> e)
-      case EApp(f, e, _)        => parens(f <+> e)
-      case EChoice(choices, _)  => "CHOICE" <+> catList(choices map elcDoc, line)
+    def showELC(t: ELC): Doc = t match {
+      case ELam(p, e, a) => parens(lambdaLex <+> showEPattern(p) <+> dotLex <> nest(line <> showELC(e)))
+      case ECase(e, as, a) => caseLex <+> showELC(e) <@> ssep(as.map(showEAlternative), linebreak)
+      case ELet(d, e, a) => letLex <+> showEDefinition(d) <@> inLex <> nest(line <> showELC(e))
+      case ELetRec(ds, e, a) => "LETREC" <+> nest(line <> cat(ds.map(showEDefinition))) <@> inLex <> nest(line <> showELC(e))
+      case EApp(f, e, a) => parens(showELC(f) <+> showELC(e))
+      case EVar(i, a) => i.toString
+      case ECon(c, a) => c.toString
+      case EInt(v, a) => value(v)
+      case EReal(v, a) => value(v)
+      case EChar(c, a) => dquotes(value(c))
+      case EStr(s, a) => dquotes(value(s))
+      case EJavaScript(j, s, a) => {
+	val sigDoc = s match {
+	  case None      => empty
+	  case Some(sig) => " :" <+> sig.toString
+	}
+	jsOpenLex <+> j <+> jsCloseLex <> sigDoc
+      }
+      case EChoice(cs, a) => "CHOICE"<+>catList(cs.map(showELC),line)
     }
 
-    implicit def definitionDoc(ldef: EDefinition): Doc = ldef.lhs <+> funEqLex <> nest(line <> ldef.rhs)
-
-    implicit def alternativeDoc(alt: EAlternative): Doc = ofLex <+> alt.pattern <+> thenLex <+> alt.expr
-
-    implicit def patternDoc(pat: EPattern): Doc = pat match {
-      case EPatternVar(v, _)         => v
-      case EPatternApp(con, pats, _) => con <+> catList(pats map patternDoc, "")
+    def showEDefinition(l: EDefinition): Doc = text(l.lhs.toString) <+> funEqLex <> nest(line <> showELC(l.rhs))
+    def showEAlternative(a: EAlternative): Doc = ofLex <+> showEPattern(a.pattern) <+> thenLex <+> showELC(a.expr)
+    def showEPattern(p: EPattern): Doc = p match {
+      case EPatternVar(v, a) => v
+      case EPatternApp(c, ps, a) => text(c.toString) <+> catList(ps.map(showEPattern), "")
     }
 
-    def catList(list: List[Doc], sep: Doc): Doc = group(nest(lsep(list, sep)))
+    def catList(l: List[Doc], sep: Doc): Doc = (group(nest(lsep(l, sep))))
   }
 
 }

@@ -1,32 +1,29 @@
 /*
- * Copyright (c) 2012, Technische Universität Berlin
+ * Copyright (c) 2012, TU Berlin
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
+ * modification, are permitted provided that the following conditions are met:
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above copyright
+ *     notice, this list of conditions and the following disclaimer in the
+ *     documentation and/or other materials provided with the distribution.
+ *   * Neither the name of the TU Berlin nor the
+ *     names of its contributors may be used to endorse or promote products
+ *     derived from this software without specific prior written permission.
+
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL TU Berlin BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * - Redistributions of source code must retain the above copyright
- *   notice, this list of conditions and the following disclaimer.
- * - Redistributions in binary form must reproduce the above
- *   copyright notice, this list of conditions and the following
- *   disclaimer in the documentation and/or other materials provided
- *   with the distribution.
- * - Neither the name of the TU Berlin nor the names of its
- *   contributors may be used to endorse or promote products derived
- *   from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
- * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 package de.tuberlin.uebb.sl2.modules
@@ -73,13 +70,13 @@ trait SyntaxTraversal {
     */
   def map[A: TypeTag](f: Id ~> Id, x: A): A = {
     val y = x match {
-      case Program(signatures, functionDefs, dataDefs, a) => {
-        val sigs: Map[Var, FunctionSig] = signatures.map { case (a, b) => map(f, (map(f, a), map(f, b))) }
-        val fund: Map[Var, List[FunctionDef]] = functionDefs.map { case (a, b) => map(f, (map(f, a), map(f, b.map(map(f, _))))) }
-        Program(map(f, sigs), map(f, fund), map(f, dataDefs.map(map(f, _))), map(f, a))
+      case Program(imports, signatures, functionDefs, functionDefsExtern, dataDefs, a) => {
+        val sigs: Map[VarName, FunctionSig] = signatures.map { case (a, b) => map(f, (map(f, a), map(f, b))) }
+        val fund: Map[VarName, List[FunctionDef]] = functionDefs.map { case (a, b) => map(f, (map(f, a), map(f, b.map(map(f, _))))) }
+        Program(map(f, imports), map(f, sigs), map(f, fund), map(f, functionDefsExtern), map(f, dataDefs.map(map(f, _))), map(f, a))
       }
 
-      case FunctionSig(typ, a) => FunctionSig(map(f, typ), map(f, a))
+      case FunctionSig(typ, modi, a) => FunctionSig(map(f, typ), map(f, modi), map(f, a))
 
       case FunctionDef(patterns, expr, a) => FunctionDef(map(f, patterns.map(map(f, _))), map(f, expr), map(f, a))
 
@@ -87,7 +84,7 @@ trait SyntaxTraversal {
 
       case PatternExpr(con, patExprs, a) => PatternExpr(map(f, con), map(f, patExprs.map(map(f, _))), map(f, a))
 
-      case DataDef(ide, tvars, constructors, a) => DataDef(map(f, ide), map(f, tvars.map(map(f, _))), map(f, constructors.map(map(f, _))), map(f, a))
+      case DataDef(ide, tvars, constructors, modi, a) => DataDef(map(f, ide), map(f, tvars.map(map(f, _))), map(f, constructors.map(map(f, _))), map(f, modi), map(f, a))
 
       case ConstructorDef(constructor, types, a) => ConstructorDef(map(f, constructor), map(f, types.map(map(f, _))), map(f, a))
 
@@ -117,9 +114,11 @@ trait SyntaxTraversal {
 
       case ConstString(s, a) => ConstString(map(f, s), map(f, a))
 
-      case Alternative(pattern, expr, a) => x
+      case JavaScript(j, s, a) => JavaScript(map(f, j), map(f, s), map(f, a))
 
-      case LetDef(lhs, rhs, a) => x
+      case Alternative(pattern, expr, a) => Alternative(map(f, pattern), map(f, expr), map(f, a))
+
+      case LetDef(lhs, rhs, a) => LetDef(map(f, lhs), map(f, rhs), map(f, a))
 
       case a => a
     }
