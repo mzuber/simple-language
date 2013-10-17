@@ -61,8 +61,8 @@ trait ModuleContextSpec extends FunSpec with ShouldMatchers {
         DEF funC x = b2funB2a(B1.funB1b(x))
       """.parsed.asInstanceOf[Program]
       
-      val importCB1 = ResolvedQualifiedImport("B1", "b1", null, null, astB1, astC.getImport("B1"))
-      val importCB2 = ResolvedQualifiedImport("B2", "b2", null, null, astB2, astC.getImport("B2"))
+      val importCB1 = ResolvedQualifiedImport("B1", "b1", null, astB1, astC.getImport("B1"))
+      val importCB2 = ResolvedQualifiedImport("B2", "b2", null, astB2, astC.getImport("B2"))
       
       val astX = """
         IMPORT "a" AS A
@@ -73,9 +73,9 @@ trait ModuleContextSpec extends FunSpec with ShouldMatchers {
         DEF funX = B2.funB2a
       """.parsed.asInstanceOf[Program]
       
-      val importXA  = ResolvedQualifiedImport("A" , "a" , null, null, astA , astX.getImport("A" ))
-      val importXB1 = ResolvedQualifiedImport("B1", "b1", null, null, astB1, astX.getImport("B1"))
-      val importXB2 = ResolvedQualifiedImport("B2", "b2", null, null, astB2, astX.getImport("B2"))
+      val importXA  = ResolvedQualifiedImport("A" , "a" , null, astA , astX.getImport("A" ))
+      val importXB1 = ResolvedQualifiedImport("B1", "b1", null, astB1, astX.getImport("B1"))
+      val importXB2 = ResolvedQualifiedImport("B2", "b2", null, astB2, astX.getImport("B2"))
       
       val importsC = normalizeModules(List(importCB1, importCB2))
       val importsX = normalizeModules(List(importXA, importXB1, importXB2))

@@ -22,26 +22,23 @@ trait ModuleResolver {
       val name:String,
       override val path:String,
       override val file:AbstractFile,
-      val jsFile:AbstractFile,
       val signature:Program,
       override val ast:Import) extends ResolvedImport(path, file, ast)
       
   case class ResolvedUnqualifiedImport(
       override val path: String,
       override val file: AbstractFile,
-      override val jsFile: AbstractFile,
       override val signature: Program,
       override val ast: UnqualifiedImport) extends ResolvedModuleImport(
-          "$$"+path.replace('/', '$'), path, file, jsFile, signature, ast)
+          "$$"+path.replace('/', '$'), path, file, signature, ast)
   
   case class ResolvedQualifiedImport(
       override val name: ModuleVar,
       override val path: String,
       override val file: AbstractFile,
-      override val jsFile: AbstractFile,
       override val signature: Program,
       override val ast: QualifiedImport)
-    extends ResolvedModuleImport(name, path, file, jsFile, signature, ast)
+    extends ResolvedModuleImport(name, path, file, signature, ast)
     
   case class ResolvedExternImport(
       override val path: String,

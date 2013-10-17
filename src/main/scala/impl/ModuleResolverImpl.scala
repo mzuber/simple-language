@@ -129,15 +129,14 @@ trait ModuleResolverImpl extends ModuleResolver {
         return Left(GenericError("unqualified import " + path + " doesn't start with " + stdPrefix))
       for (
         file <- findImportResource(imp.path.substring(stdPrefix.length) + ".sl.signature", config, attr).right;
-        jsFile <- findImportResource(imp.path.substring(stdPrefix.length) + ".sl.js", config, attr).right;
         signature <- importSignature(file).right
-      ) yield ResolvedUnqualifiedImport(path, file, jsFile, signature, ui)
+      ) yield ResolvedUnqualifiedImport(path, file, signature, ui)
     case qi @ QualifiedImport(path, name, attr) =>
       for (
         file <- findImport(config, imp.path + ".sl.signature", attr).right;
         jsFile <- findImport(config, imp.path + ".sl.js", attr).right;
         signature <- importSignature(file).right
-      ) yield ResolvedQualifiedImport(name, path, file, jsFile, signature, qi)
+      ) yield ResolvedQualifiedImport(name, path, file, signature, qi)
     case ei @ ExternImport(path, attr) =>
       for (
         file <- findImport(config, imp.path + ".js", attr).right

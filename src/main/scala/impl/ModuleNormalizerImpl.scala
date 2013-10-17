@@ -75,13 +75,13 @@ trait ModuleNormalizerImpl extends ModuleNormalizer {
   private def normalizeModule(sub : ModuleVar => ModuleVar) : ResolvedImport => ResolvedImport = imp => imp match {
     // normalize only qualified imports
     case ui: ResolvedUnqualifiedImport => ui
-    case ResolvedQualifiedImport(name, path, file, jsFile, Program(imports, sigs, defs, exts, datas, attrs), ast) =>
+    case ResolvedQualifiedImport(name, path, file, Program(imports, sigs, defs, exts, datas, attrs), ast) =>
       val normImports = normalizeImports(sub)(imports)
       val normSigs    = normalizeSigs   (sub)(sigs   )
       val normDatas   = normalizeDatas  (sub)(datas  )
       val normProg    = Program(normImports, normSigs, defs, exts, normDatas, attrs)
       
-      ResolvedQualifiedImport(name, path, file, jsFile, normProg, ast)
+      ResolvedQualifiedImport(name, path, file, normProg, ast)
     case ei : ResolvedExternImport => ei
   }
   

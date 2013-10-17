@@ -23,7 +23,7 @@ trait ModuleContextImpl extends ModuleContext {
 	  	ui.signature.signatures.map(
           {case (funName, sig) => (Syntax.Var(funName).asInstanceOf[VarFirstClass] ->
           							astToType(sig.typ).generalize(Map()))})
-    case ResolvedQualifiedImport(name, _, _, _, prog, _) =>
+    case ResolvedQualifiedImport(name, _, _, prog, _) =>
       dataConTypes(prog.dataDefs, name) ++
         prog.signatures.map(
           {case (funName, sig) => (Syntax.Var(funName, name).asInstanceOf[VarFirstClass] ->
@@ -38,7 +38,7 @@ trait ModuleContextImpl extends ModuleContext {
         
         (Syntax.Var(ide) -> sig)
       })
-    case ResolvedQualifiedImport(name, _, _, _, prog, _) =>
+    case ResolvedQualifiedImport(name, _, _, prog, _) =>
       prog.signatures.map(kv => {
         val (ide, sig) = kv
         

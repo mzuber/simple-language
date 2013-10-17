@@ -46,7 +46,7 @@ trait ModuleNormalizerSpec extends FunSpec with ShouldMatchers {
       val namedImports = module.imports.map { imp =>
         val qimp = imp.asInstanceOf[QualifiedImport]
         val resolved = modules.get(qimp.path).get
-        val rimp = ResolvedQualifiedImport(qimp.name, qimp.path, null, null, resolved, qimp)
+        val rimp = ResolvedQualifiedImport(qimp.name, qimp.path, null, resolved, qimp)
         
         (qimp.path, rimp)
       }
