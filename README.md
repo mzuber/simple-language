@@ -72,3 +72,9 @@ IN even 5
 The names introduced in a let-expression may be used in the right-hand sides, even mutually recursive.
 There is, however, an important restriction due to SL's eager evaluation strategy: In a set of mutually
 recursive definitions, all right-hand sides must be lambda-expressions.
+
+### Acknowledgements
+
+The first version of the SL language as well as a corresponding Haskell front-end was developed by
+Andreas Büchele, Florian Lorenzen, and Judith Rohloff. The Scala implementation of the SL compiler
+in this repository was developed by Christoph Höger, Fabian Linges, and Martin Zuber.
